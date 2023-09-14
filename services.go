@@ -1,26 +1,53 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"text/template"
+)
 
+func color(bld Build) string {
+	switch bld.Status {
+	case "SUCCESS":
+		return "4BB543"
+	case "FAILURE":
+		return "FC100D"
+	default:
+		return "808080"
+	}
+}
+
+var discordTmpl = template.Must(template.New("discord").Parse(
+	`**Build [#{{.BuildNumber}}]({{.BuildLink}})**
+**of [{{.Repo}}]({{.RepoLink}}):{{.Branch}}@[{{slice .CommitAfter 0 7}}]({{.CommitLink}})**
+**by {{.Author}}**
+**{{.Status}}**
+`))
+
+func discordURL(bld Build) string {
+	id := getenvStrict("PLUGIN_DISCORD_WEBHOOK_ID")
+	token := getenvStrict("PLUGIN_DISCORD_WEBHOOK_TOKEN")
+	return fmt.Sprintf("discord://%s@%s?color=0x%s&splitLines=false", token, id, color(bld))
+}
+
+// https://containrrr.dev/shoutrrr/v0.8/services/overview/
 var discord Service = Service{
-	tmpl: mdTmpl,
-	buildURL: func(bld Build) string {
+	tmpl:     discordTmpl,
+	buildURL: discordURL,
+}
 
-		discordID := getenvStrict("PLUGIN_DISCORD_WEBHOOK_ID")
-		discordToken := getenvStrict("PLUGIN_DISCORD_WEBHOOK_TOKEN")
+var slackTmpl = template.Must(template.New("slack").Parse(
+	`*Build <{{.BuildLink}}|#{{.BuildNumber}}>*
+*of <{{.RepoLink}}|{{.Repo}}>:{{.Branch}}@<{{.CommitLink}}|{{slice .CommitAfter 0 7}}>*
+*by {{.Author}}*
+*{{.Status}}*
+`))
 
-		var color string
+func slackURL(bld Build) string {
+	token := getenvStrict("PLUGIN_SLACK_WEBHOOK_TOKEN")
+	return fmt.Sprintf("slack://hook:%s@webhook?color=%%23%s", token, color(bld))
+}
 
-		switch bld.Status {
-		case "SUCCESS":
-			color = colorSuccess
-		case "FAILURE":
-			color = colorFailure
-		default:
-			color = colorUnknown
-		}
-
-		return fmt.Sprintf("discord://%s@%s?color=%s&splitLines=false", discordToken, discordID, color)
-
-	},
+var slack Service = Service{
+	tmpl:     slackTmpl,
+	buildURL: slackURL,
 }

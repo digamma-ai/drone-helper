@@ -20,7 +20,8 @@ func main() {
 	cacheDepsArg := cacheFlags.String("deps", "", "List of files on which cache depends (space-separated)")
 
 	notifyFlags := flag.NewFlagSet("notify", flag.ExitOnError)
-	notifyDiscordArg := notifyFlags.Bool("discord", true, `Send notification to Discord. (requires: discord_webhook_token, discord_webhook_id)`)
+	notifyDiscordArg := notifyFlags.Bool("discord", false, `Send notification to Discord. (requires: discord_webhook_token, discord_webhook_id)`)
+	notifySlackArg := notifyFlags.Bool("slack", false, `Send notification to Slack. (requires: slack_webhook_token)`)
 
 	if len(os.Args) < 2 {
 		log.Fatalln("expected 'cache' or 'notify' subcommands")
@@ -40,6 +41,8 @@ func main() {
 		switch {
 		case *notifyDiscordArg:
 			discord.notify()
+		case *notifySlackArg:
+			slack.notify()
 		}
 	default:
 		log.Fatalln(fmt.Sprintf("unexpected subcommand: %s", os.Args[1]))

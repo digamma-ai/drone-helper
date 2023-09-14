@@ -1,19 +1,35 @@
-## drone-helper
+# drone-helper
 
 A simple way to accomplish two common tasks in [Drone CI](https://www.drone.io/): caching and notifications.
 
-### Notifications
+## Notifications
 
 `drone-helper notify` is essentially a convenience wrapper over [shoutrrr](https://github.com/containrrr/shoutrrr).
 All it does is gather the relevant build info from Drone, arrange it into a rich text message in a format supported by the respective platform and send it.
 
-### Caching
+### Supported services
+
+* Discord
+```yaml
+  - name: notify
+    image: codeminders.com/drone-helper
+    commands:
+      - drone-helper notify --discord
+    settings:
+      discord_webhook_token:
+        from_secret: discord_token
+      discord_webhook_id:
+        from_secret: discord_id
+```
+
+
+## Caching
 
 `drone-helper cache` implements full-system caching via Docker (a practice [endorsed](https://web.archive.org/web/20200617204324/https://discourse.drone.io/t/build-docker-image-and-re-use-in-the-next-step/6190) by the developer).
 A cache is uniquely identified by its build dependencies (`--deps`), and will be rebuilt if any one changes.
 
 
-#### Usage
+### Usage
 
 0. `drone-helper cache` must be run before any steps using the cache (even if cache exists and doesn't need rebuilding).
 1. The repository must be "Trusted" in Drone [^2].
@@ -26,7 +42,7 @@ A cache is uniquely identified by its build dependencies (`--deps`), and will be
 
 [2]: Settings -> General -> Project Settings -> Trusted
 
-### Example pipeline
+## Example pipeline
 
 ``` yaml
 ---
@@ -64,9 +80,9 @@ steps:
     image: codeminders.com/drone-helper
     commands:
       - drone-helper notify --discord
-    environment:
-      DISCORD_WEBHOOK_TOKEN:
-        from_secret: test_discord_token
-      DISCORD_WEBHOOK_ID:
-        from_secret: test_discord_id
+    settings:
+      discord_webhook_token:
+        from_secret: discord_token
+      discord_webhook_id:
+        from_secret: discord_id
 ```
