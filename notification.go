@@ -21,32 +21,23 @@ var mdTmpl = template.Must(template.New("markdown-message").Parse(
 **{{.Status}}**
 `))
 
-func notifyDiscord() {
+type Service struct {
+	tmpl     *template.Template
+	buildURL func(Build) string
+}
+
+func (srv Service) notify() {
 
 	bld := getBuildInfo()
-
-	discordID := getenvStrict("DISCORD_WEBHOOK_ID")
-	discordToken := getenvStrict("DISCORD_WEBHOOK_TOKEN")
-
-	var color string
-
-	switch bld.Status {
-	case "SUCCESS":
-		color = colorSuccess
-	case "FAILURE":
-		color = colorFailure
-	default:
-		color = colorUnknown
-	}
 
 	var buf bytes.Buffer
 	mdTmpl.Execute(&buf, bld)
 	message := buf.String()
 
-	discordURL := fmt.Sprintf("discord://%s@%s?color=%s&splitLines=false", discordToken, discordID, color)
+	url := srv.buildURL(bld)
 
-	fmt.Printf("Sending message to Discord:\n%s\n", message)
-	err := shoutrrr.Send(discordURL, message)
+	fmt.Printf("Sending message:\n%s\n", message)
+	err := shoutrrr.Send(url, message)
 	checkErrorFatal(err)
 	fmt.Println("Message sent.")
 
