@@ -4,11 +4,10 @@ RUN apk add go
 
 WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY *.go ./
-
-RUN go mod init codeminders.com/drone-helper
-RUN go mod tidy
-
 ARG GOBIN=/usr/local/bin
 RUN go install
 
